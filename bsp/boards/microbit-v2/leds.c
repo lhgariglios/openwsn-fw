@@ -62,7 +62,11 @@ typedef enum {
 
 
 void leds_all_off(void) {
-
+   COL1_HIGH();
+   COL2_HIGH();
+   COL3_HIGH();
+   COL4_HIGH();
+   COL5_HIGH();
 }
 
 
@@ -74,89 +78,135 @@ void leds_off(led_id_t led_id);
 //=========================== public ==========================================
 
 void leds_init() {
-
+    leds_all_off();
 }
 
 //==== error led
 
 void leds_error_off(void) {
-
+  leds_off(LED11);
 }
 
 void leds_error_on(void) {
-
+  leds_on(LED11);
 }
 
 void leds_error_toggle(void) {
-
+    if (leds_error_isOn()==0) {
+        leds_error_on();
+    } else {
+        leds_error_off();
+    }
 }
 
 uint8_t leds_error_isOn(void) {
-
+  uint32_t row = NRF_P0->OUT & (1<<21);
+  uint32_t col = NRF_P0->OUT & (1<<28);
+    if (row  && !col) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 //==== sync led
 
 void leds_sync_off(void) {
-
+  leds_off(LED12);
 }
 
 void leds_sync_on(void) {
-
+  leds_on(LED12);
 }
 
 void leds_sync_toggle(void) {
-
+    if (leds_sync_isOn()==0) {
+        leds_sync_on();
+    } else {
+        leds_sync_off();
+    }
 }
 
 uint8_t leds_sync_isOn(void) {
-
+  uint32_t row = NRF_P0->OUT & (1<<21);
+  uint32_t col = NRF_P0->OUT & (1<<11);
+    if (row  && !col) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 //==== radio led
 
 void leds_radio_off(void) {
-
+  leds_off(LED13);
 }
 
 void leds_radio_on(void) {
-
+  leds_on(LED13);
 }
 
 void leds_radio_toggle(void) {
-
+    if (leds_radio_isOn()==0) {
+        leds_radio_on();
+    } else {
+        leds_radio_off();
+    }
 }
 
 uint8_t leds_radio_isOn(void) {
-
+  uint32_t row = NRF_P0->OUT & (1<<21);
+  uint32_t col = NRF_P0->OUT & (1<<31);
+    if (row  && !col) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 //==== debug led
 
 void leds_debug_off(void) {
-
+  leds_off(LED14);
 }
 
 void leds_debug_on(void) {
-
+  leds_on(LED14);
 }
 
 void leds_debug_toggle(void) {
-
+    if (leds_debug_isOn()==0) {
+        leds_debug_on();
+    } else {
+        leds_debug_off();
+    }
 }
 
 uint8_t leds_debug_isOn(void) {
-
+  uint32_t row = NRF_P0->OUT & (1<<21);
+  uint32_t col = NRF_P1->OUT & (1<<05);
+    if (row  && !col) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 //==== all leds
 
 void leds_all_on(void) {
-
+    leds_radio_on();
+    leds_sync_on();
+    leds_debug_on();
+    leds_error_on();
 }
 
 void leds_all_toggle(void) {
-
+    leds_radio_toggle();
+    leds_sync_toggle();
+    leds_debug_toggle();
+    leds_error_toggle();
 }
 
 void leds_error_blink(void) {
@@ -175,19 +225,30 @@ void leds_error_blink(void) {
 }
 
 void leds_circular_shift(void) {
-
+  leds_increment();
 }
 
 void leds_increment(void) {
+    
+    if (leds_error_isOn()) {
+      leds_error_off();
+      leds_sync_on();
+    } else if(leds_sync_isOn()){
+      leds_sync_off();
+      leds_radio_on();
+    } else if (leds_radio_isOn()) {
+      leds_radio_off();
+      leds_debug_on(); 
+    } else if (leds_debug_isOn()){
+      leds_debug_off();
+    } else {
+      leds_error_on();
+    }
 }
 
 //=========================== private =========================================
 
 void leds_on(led_id_t led_id) {
-
-    ROW1_DISCONNECT(); ROW2_DISCONNECT(); ROW3_DISCONNECT();
-    ROW4_DISCONNECT(); ROW5_DISCONNECT();
-    COL1_HIGH(); COL2_HIGH(); COL3_HIGH(); COL4_HIGH(); COL5_HIGH();
 
     switch(led_id) {
 
@@ -227,34 +288,34 @@ void leds_off(led_id_t led_id) {
 
     switch(led_id) {
 
-        case LED11:  COL1_HIGH(); ROW1_DISCONNECT(); break;
-        case LED12:  COL2_HIGH(); ROW1_DISCONNECT(); break;
-        case LED13:  COL3_HIGH(); ROW1_DISCONNECT(); break;
-        case LED14:  COL4_HIGH(); ROW1_DISCONNECT(); break;
-        case LED15:  COL5_HIGH(); ROW1_DISCONNECT(); break;
+        case LED11:  COL1_HIGH(); break;
+        case LED12:  COL2_HIGH(); break;
+        case LED13:  COL3_HIGH(); break;
+        case LED14:  COL4_HIGH(); break;
+        case LED15:  COL5_HIGH(); break;
 
-        case LED21:  COL1_HIGH(); ROW2_DISCONNECT(); break;
-        case LED22:  COL2_HIGH(); ROW2_DISCONNECT(); break;
-        case LED23:  COL3_HIGH(); ROW2_DISCONNECT(); break;
-        case LED24:  COL4_HIGH(); ROW2_DISCONNECT(); break;
-        case LED25:  COL5_HIGH(); ROW2_DISCONNECT(); break;
+        case LED21:  COL1_HIGH(); break;
+        case LED22:  COL2_HIGH(); break;
+        case LED23:  COL3_HIGH(); break;
+        case LED24:  COL4_HIGH(); break;
+        case LED25:  COL5_HIGH(); break;
 
-        case LED31:  COL1_HIGH(); ROW3_DISCONNECT(); break;
-        case LED32:  COL2_HIGH(); ROW3_DISCONNECT(); break;
-        case LED33:  COL3_HIGH(); ROW3_DISCONNECT(); break;
-        case LED34:  COL4_HIGH(); ROW3_DISCONNECT(); break;
-        case LED35:  COL5_HIGH(); ROW3_DISCONNECT(); break;
+        case LED31:  COL1_HIGH(); break;
+        case LED32:  COL2_HIGH(); break;
+        case LED33:  COL3_HIGH(); break;
+        case LED34:  COL4_HIGH(); break;
+        case LED35:  COL5_HIGH(); break;
 
-        case LED41:  COL1_HIGH(); ROW4_DISCONNECT(); break;
-        case LED42:  COL2_HIGH(); ROW4_DISCONNECT(); break;
-        case LED43:  COL3_HIGH(); ROW4_DISCONNECT(); break;
-        case LED44:  COL4_HIGH(); ROW4_DISCONNECT(); break;
-        case LED45:  COL5_HIGH(); ROW4_DISCONNECT(); break;
+        case LED41:  COL1_HIGH(); break;
+        case LED42:  COL2_HIGH(); break;
+        case LED43:  COL3_HIGH(); break;
+        case LED44:  COL4_HIGH(); break;
+        case LED45:  COL5_HIGH(); break;
 
-        case LED51:  COL1_HIGH(); ROW5_DISCONNECT(); break;
-        case LED52:  COL2_HIGH(); ROW5_DISCONNECT(); break;
-        case LED53:  COL3_HIGH(); ROW5_DISCONNECT(); break;
-        case LED54:  COL4_HIGH(); ROW5_DISCONNECT(); break;
-        case LED55:  COL5_HIGH(); ROW5_DISCONNECT(); break;
+        case LED51:  COL1_HIGH(); break;
+        case LED52:  COL2_HIGH(); break;
+        case LED53:  COL3_HIGH(); break;
+        case LED54:  COL4_HIGH(); break;
+        case LED55:  COL5_HIGH(); break;
     }
 }

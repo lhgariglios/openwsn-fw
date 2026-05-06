@@ -15,6 +15,7 @@
  <Project>
   <ProjectSessionItem path="microbit"/>
   <ProjectSessionItem path="microbit;MorseChat_mesh"/>
+  <ProjectSessionItem path="microbit;MorseChat_mesh;application"/>
  </Project>
  <Register1/>
  <Register2/>
@@ -39,7 +40,7 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="965" useTextEdit="1" path="microbit.emProject" left="0" selected="1" top="946" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="385" useTextEdit="1" path="../common/MorseChat_mesh/morseChat.c" left="0" selected="1" top="361" codecName="Default"/>
  </Files>
  <EMStudioWindow activeProject="MorseChat_mesh" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

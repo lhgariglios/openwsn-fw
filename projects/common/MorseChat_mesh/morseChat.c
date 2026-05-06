@@ -6,6 +6,17 @@
 #include "scheduler.h"
 #include "board.h"
 
+// ── Pckgs for mesh  ──────────────────────────────────────────────────────────
+
+#include "openqueue.h"
+#include "opendefs.h"
+#include "udp.h"
+#include "sock.h"
+#include "openserial.h"
+#include "idmanager.h"
+#include "openrandom.h"
+#include "packetfunctions.h"
+
 // ── Time ──────────────────────────────────────────────────────────────────────
 
 volatile uint32_t ms_ticks = 0;
@@ -211,6 +222,161 @@ const uint8_t Digits_size[] = {
     sizeof(Five)/sizeof(led_id_t)
 };
 
+// ── Letters ───────────────────────────────────────────────────────────────────
+
+// Letter A
+const led_id_t Letter_A[] = {
+    LED13, LED22, LED24, LED32, LED33, LED34, LED42, LED44, LED52, LED54
+};
+
+// Letter B
+const led_id_t Letter_B[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED45, LED52, LED53, LED54
+};
+
+// Letter C
+const led_id_t Letter_C[] = {
+    LED13, LED14, LED15, LED22, LED32, LED42, LED53, LED54, LED55
+};
+
+// Letter D
+const led_id_t Letter_D[] = {
+    LED11, LED12, LED13, LED24, LED34, LED44, LED51, LED52, LED53, LED21, LED31, LED41
+};
+
+// Letter E
+const led_id_t Letter_E[] = {
+    LED12, LED13, LED14, LED15, LED22, LED32, LED33, LED34, LED42, LED52, LED53, LED54, LED55
+};
+
+// Letter F
+const led_id_t Letter_F[] = {
+    LED12, LED13, LED14, LED15, LED22, LED32, LED33, LED34, LED42, LED52
+};
+
+// Letter G
+const led_id_t Letter_G[] = {
+    LED13, LED14, LED15, LED22, LED32, LED34, LED35, LED42, LED45, LED53, LED54, LED55
+};
+
+// Letter H
+const led_id_t Letter_H[] = {
+    LED12, LED15, LED22, LED25, LED32, LED33, LED34, LED35, LED42, LED45, LED52, LED55
+};
+
+// Letter I
+const led_id_t Letter_I[] = {
+    LED12, LED13, LED14, LED23, LED33, LED43, LED52, LED53, LED54
+};
+
+// Letter J
+const led_id_t Letter_J[] = {
+    LED13, LED14, LED15, LED24, LED34, LED42, LED44, LED53
+};
+
+// Letter K
+const led_id_t Letter_K[] = {
+    LED12, LED15, LED22, LED24, LED32, LED33, LED42, LED44, LED52, LED55
+};
+
+// Letter L
+const led_id_t Letter_L[] = {
+    LED12, LED22, LED32, LED42, LED52, LED53, LED54, LED55
+};
+
+// Letter M
+const led_id_t Letter_M[] = {
+    LED11, LED21, LED31, LED41, LED51, LED22, LED33, LED24, LED15, LED25, LED35, LED45, LED55
+};
+
+// Letter N
+const led_id_t Letter_N[] = {
+    LED11, LED21, LED31, LED41, LED51, LED22, LED33, LED44, LED55, LED15, LED25, LED35, LED45
+};
+
+// Letter O
+const led_id_t Letter_O[] = {
+    LED13, LED14, LED22, LED25, LED32, LED35, LED42, LED45, LED53, LED54
+};
+
+// Letter P
+const led_id_t Letter_P[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED52
+};
+
+// Letter Q
+const led_id_t Letter_Q[] = {
+    LED13, LED14, LED22, LED25, LED32, LED35, LED42, LED44, LED53, LED54, LED55
+};
+
+// Letter R
+const led_id_t Letter_R[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED44, LED52, LED55
+};
+
+// Letter S
+const led_id_t Letter_S[] = {
+    LED13, LED14, LED15, LED22, LED33, LED34, LED45, LED52, LED53, LED54
+};
+
+// Letter T
+const led_id_t Letter_T[] = {
+    LED11, LED12, LED13, LED14, LED15, LED23, LED33, LED43, LED53
+};
+
+// Letter U
+const led_id_t Letter_U[] = {
+    LED11, LED21, LED31, LED41, LED52, LED53, LED54, LED15, LED25, LED35, LED45
+};
+
+// Letter V
+const led_id_t Letter_V[] = {
+    LED11, LED21, LED32, LED42, LED53, LED44, LED34, LED25, LED15
+};
+
+// Letter W
+const led_id_t Letter_W[] = {
+    LED11, LED21, LED31, LED41, LED51, LED42, LED33, LED44, LED15, LED25, LED35, LED45, LED55
+};
+
+// Letter X
+const led_id_t Letter_X[] = {
+    LED11, LED51, LED22, LED42, LED33, LED24, LED44, LED15, LED55
+};
+
+// Letter Y
+const led_id_t Letter_Y[] = {
+    LED11, LED21, LED32, LED43, LED53, LED34, LED25, LED15
+};
+
+// Letter Z
+const led_id_t Letter_Z[] = {
+    LED11, LED12, LED13, LED14, LED15, LED24, LED33, LED42, LED51, LED52, LED53, LED54, LED55
+};
+
+const led_id_t * const Letters[] = {
+    Letter_A, Letter_B, Letter_C, Letter_D, Letter_E, Letter_F, Letter_G, 
+    Letter_H, Letter_I, Letter_J, Letter_K, Letter_L, Letter_M, Letter_N, 
+    Letter_O, Letter_P, Letter_Q, Letter_R, Letter_S, Letter_T, Letter_U, 
+    Letter_V, Letter_W, Letter_X, Letter_Y, Letter_Z
+};
+
+const uint8_t Letters_size[] = {
+    sizeof(Letter_A)/sizeof(led_id_t), sizeof(Letter_B)/sizeof(led_id_t),
+    sizeof(Letter_C)/sizeof(led_id_t), sizeof(Letter_D)/sizeof(led_id_t),
+    sizeof(Letter_E)/sizeof(led_id_t), sizeof(Letter_F)/sizeof(led_id_t),
+    sizeof(Letter_G)/sizeof(led_id_t), sizeof(Letter_H)/sizeof(led_id_t),
+    sizeof(Letter_I)/sizeof(led_id_t), sizeof(Letter_J)/sizeof(led_id_t),
+    sizeof(Letter_K)/sizeof(led_id_t), sizeof(Letter_L)/sizeof(led_id_t),
+    sizeof(Letter_M)/sizeof(led_id_t), sizeof(Letter_N)/sizeof(led_id_t),
+    sizeof(Letter_O)/sizeof(led_id_t), sizeof(Letter_P)/sizeof(led_id_t),
+    sizeof(Letter_Q)/sizeof(led_id_t), sizeof(Letter_R)/sizeof(led_id_t),
+    sizeof(Letter_S)/sizeof(led_id_t), sizeof(Letter_T)/sizeof(led_id_t),
+    sizeof(Letter_U)/sizeof(led_id_t), sizeof(Letter_V)/sizeof(led_id_t),
+    sizeof(Letter_W)/sizeof(led_id_t), sizeof(Letter_X)/sizeof(led_id_t),
+    sizeof(Letter_Y)/sizeof(led_id_t), sizeof(Letter_Z)/sizeof(led_id_t)
+};
+
 // ── Input ─────────────────────────────────────────────────────────────────────
 
 typedef enum {
@@ -285,7 +451,7 @@ static input_event_t input_update(void) {
 
 // ── Id configuration ──────────────────────────────────────────────────────────
 
-int Receiver_ID = 0;
+int Receiver_ID = 1;
 
 #define MAX_SYMBOLS    32
 #define MORSE_UDP_PORT 0xF0B0
@@ -329,19 +495,187 @@ char morse_to_char(const char* code) {
     return '?'; 
 }
 
+// ── mesh ──────────────────────────────────────────────────────────────────────
+
+sock_udp_t morse_socket;
+
+sock_udp_ep_t local = {
+    .port = MORSE_UDP_PORT
+};
+
+static bool is_network_ready(void) {
+    // 1. must have IPv6 address
+    open_addr_t* addr64 = idmanager_getMyID(ADDR_64B);
+
+    bool has_addr = false;
+    for (int i = 0; i < 8; i++) {
+        if (addr64->addr_64b[i] != 0x00) {
+            has_addr = true;
+            break;
+        }
+    }
+
+    if (!has_addr) return false;
+
+    // 2. DAG root is always ready
+    if (idmanager_getIsDAGroot()) return true;
+    
+    return true;
+}
+
+#define MAX_NODES 16
+
+typedef struct {
+    uint8_t id;
+    open_addr_t addr;
+    bool valid;
+} node_entry_t;
+
+static node_entry_t node_table[MAX_NODES];
+
+typedef struct {
+    uint8_t id;
+    uint8_t addr64[8];
+} hello_msg_t;
+
+void send_hello_task(void) {
+    if (!is_network_ready()) {
+        scheduler_push_task(send_hello_task, TASKPRIO_COAP);
+        return;
+    }
+
+    OpenQueueEntry_t* pkt = openqueue_getFreePacketBuffer(COMPONENT_UDP);
+    if (!pkt) {
+        scheduler_push_task(send_hello_task, TASKPRIO_COAP);
+        return;
+    }
+
+    hello_msg_t msg;
+
+    msg.id = My_ID;
+    memcpy(msg.addr64, idmanager_getMyID(ADDR_64B)->addr_64b, 8);
+
+    packetfunctions_reserveHeader(&pkt, sizeof(msg));
+    memcpy(pkt->payload, &msg, sizeof(msg));
+
+    pkt->l4_sourcePortORicmpv6Type = MORSE_UDP_PORT;
+    pkt->l4_destination_port = MORSE_UDP_PORT;
+
+    open_addr_t dest;
+    memset(dest.addr_128b, 0xff, 16); // broadcast
+    dest.type = ADDR_128B;
+
+    pkt->l3_destinationAdd = dest;
+
+    udp_transmit(pkt);
+
+    scheduler_push_task(send_hello_task, TASKPRIO_COAP);
+}
+
+static void id_to_addr(uint8_t id, open_addr_t* addr) {
+    addr->type = ADDR_128B;
+    memset(addr->addr_128b, 0, 16);
+
+    // simple scheme: ::id
+    addr->addr_128b[15] = id;
+}
+
+void morse_send(void) {
+
+    if (!is_network_ready()) {
+        printf("[ERR] Network not ready\n");
+        return;
+    }
+
+    OpenQueueEntry_t *pkt = openqueue_getFreePacketBuffer(COMPONENT_UDP);
+    if (!pkt) return;
+
+    packetfunctions_reserveHeader(&pkt, message_len);
+    memcpy(pkt->payload, message, message_len);
+
+    // FIND DESTINATION BY ID
+    open_addr_t dest;
+    bool found = false;
+
+    for (int i = 0; i < MAX_NODES; i++) {
+        if (node_table[i].valid && node_table[i].id == Receiver_ID) {
+            dest = node_table[i].addr;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("[ERR] Receiver not known\n");
+        return;
+    }
+
+    pkt->l3_destinationAdd = dest;
+
+    pkt->l4_sourcePortORicmpv6Type = MORSE_UDP_PORT;
+    pkt->l4_destination_port = MORSE_UDP_PORT;
+
+    udp_transmit(pkt);
+}
+
+void udp_receive_task(void) {
+    static uint32_t last = 0;
+
+    if (now_ms() - last < 50) {   // 50 ms interval
+        scheduler_push_task(udp_receive_task, TASKPRIO_COAP);
+        return;
+    }
+    last = now_ms();
+
+    uint8_t buf[64];
+    sock_udp_ep_t remote;
+    int len;
+
+    len = sock_udp_recv(&morse_socket,
+                        buf,
+                        sizeof(buf),
+                        0,
+                        &remote);
+
+    if (len > 0) {
+        printf("[RX] %.*s\n", len, buf);
+
+        display_show_timed(OK, sizeof(OK)/sizeof(led_id_t), 1000);
+    }
+
+    if (len == sizeof(hello_msg_t)) {
+        hello_msg_t* msg = (hello_msg_t*)buf;
+
+        for (int i = 0; i < MAX_NODES; i++) {
+            if (!node_table[i].valid || node_table[i].id == msg->id) {
+                node_table[i].id = msg->id;
+
+                memcpy(node_table[i].addr.addr_64b, msg->addr64, 8);
+                node_table[i].addr.type = ADDR_64B;
+
+                node_table[i].valid = true;
+                break;
+            }
+        }
+    }
+
+    scheduler_push_task(udp_receive_task, TASKPRIO_COAP);
+}
+
 // ── Task ──────────────────────────────────────────────────────────────────────
 
 static void app_task(void) {
     input_event_t evt = input_update();
-
+    
     switch (evt) {
         case EVT_DOT:
             printf("[ACTION] DOT\n");
-            display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
-            if (morse_len < MAX_MORSE_PER_LETTER) {
-              morse_buf[morse_len++] = '.';
-              morse_buf[morse_len]   = '\0';
-          }
+            display_show_timed(Letters[25], Letters_size[25], 1500);
+            //display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
+            //if (morse_len < MAX_MORSE_PER_LETTER) {
+            //  morse_buf[morse_len++] = '.';
+            //  morse_buf[morse_len]   = '\0';
+            //}
             break;
         case EVT_DASH:
             printf("[ACTION] DASH\n");
@@ -364,7 +698,12 @@ static void app_task(void) {
         case EVT_SEND:
             printf("[ACTION] SEND\n");
             display_show_timed(OK, sizeof(OK)/sizeof(led_id_t), 800);
-            //morse_send();
+  
+
+            printf("[BASIC] entering morse_send()");
+            morse_send();   // ← ADD THIS
+            printf("[BASIC] exiting morse_send()");
+
             message_len  = 0;
             message[0]   = '\0';
             morse_len    = 0;
@@ -382,6 +721,30 @@ static void app_task(void) {
     scheduler_push_task(app_task, TASKPRIO_COAP);
 }
 
+static void network_debug_task(void) {
+    static uint32_t last = 0;
+
+    if (now_ms() - last < 5000) { // every 5s
+        scheduler_push_task(network_debug_task, TASKPRIO_COAP);
+        return;
+    }
+    last = now_ms();
+
+    open_addr_t* addr = idmanager_getMyID(ADDR_64B);
+
+    printf("[NET DEBUG]\n");
+    printf("  DAG root: %d\n", idmanager_getIsDAGroot());
+    printf("  Addr64: %02x:%02x:%02x:%02x\n",
+           addr->addr_64b[4],
+           addr->addr_64b[5],
+           addr->addr_64b[6],
+           addr->addr_64b[7]);
+
+    printf("  network_ready: %d\n", is_network_ready());
+
+    scheduler_push_task(network_debug_task, TASKPRIO_COAP);
+}
+
 // ── Entry ─────────────────────────────────────────────────────────────────────
 
 void mote_main(void) {
@@ -390,9 +753,28 @@ void mote_main(void) {
     systick_init();
     display_timer_init();
     buttons_init();
-
     display_clear();
 
+    opentimers_init();
+    scheduler_init();
+    idmanager_init();
+
+    // ---- NETWORK ROLE ----
+    if (My_ID == 1) {
+        idmanager_setIsDAGroot(TRUE);
+        printf("[NET] DAG ROOT\n");
+    } else {
+        idmanager_setIsDAGroot(FALSE);
+        printf("[NET] NODE %d\n", My_ID);
+    }
+    
+    // ---- UDP SOCKET ----
+    sock_udp_create(&morse_socket, &local, NULL, 0);
+
+    // ---- TASKS ----
     scheduler_push_task(app_task, TASKPRIO_COAP);
+    scheduler_push_task(udp_receive_task, TASKPRIO_COAP);
+    scheduler_push_task(network_debug_task, TASKPRIO_COAP);
+
     scheduler_start();
 }
