@@ -662,6 +662,57 @@ void udp_receive_task(void) {
     scheduler_push_task(udp_receive_task, TASKPRIO_COAP);
 }
 
+// ── Letter display animation ──────────────────────────────────────────────────
+
+static char     anim_msg[MAX_SYMBOLS + 1] = {0};
+static int      anim_len   = 0;
+static int      anim_idx   = 0;
+static uint32_t anim_next  = 0;
+
+#define LETTER_DISPLAY_MS  800   // tempo por letra
+#define LETTER_GAP_MS      200   // pausa entre letras (display apagado)
+
+static void display_message_task(void) {
+    if (anim_idx >= anim_len) return;  // animação terminou, não re-agenda
+
+    uint32_t now = now_ms();
+    if (now < anim_next) {
+        scheduler_push_task(display_message_task, TASKPRIO_COAP);
+        return;
+    }
+
+    char c = anim_msg[anim_idx];
+
+    if (c >= 'A' && c <= 'Z') {
+        int i = c - 'A';
+        display_show_timed(Letters[i], Letters_size[i], LETTER_DISPLAY_MS);
+        anim_next = now + LETTER_DISPLAY_MS + LETTER_GAP_MS;
+    } else if (c == ' ') {
+        display_clear();
+        anim_next = now + LETTER_GAP_MS;
+    } else {
+        anim_next = now;  // caractere desconhecido, pula
+    }
+
+    anim_idx++;
+    scheduler_push_task(display_message_task, TASKPRIO_COAP);
+}
+
+void display_message(const char* msg, int len) {
+    // copia e converte para maiúsculo
+    int i;
+    for (i = 0; i < len && i < MAX_SYMBOLS; i++) {
+        char c = msg[i];
+        anim_msg[i] = (c >= 'a' && c <= 'z') ? c - 32 : c;
+    }
+    anim_msg[i] = '\0';
+    anim_len  = i;
+    anim_idx  = 0;
+    anim_next = now_ms();
+
+    scheduler_push_task(display_message_task, TASKPRIO_COAP);
+}
+
 // ── Task ──────────────────────────────────────────────────────────────────────
 
 static void app_task(void) {
@@ -670,7 +721,8 @@ static void app_task(void) {
     switch (evt) {
         case EVT_DOT:
             printf("[ACTION] DOT\n");
-            display_show_timed(Letters[25], Letters_size[25], 1500);
+            uint8_t buf[] = {'B', 'O', 'B', 'A', 'O'}; 
+            display_message((char*)buf, 5);
             //display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
             //if (morse_len < MAX_MORSE_PER_LETTER) {
             //  morse_buf[morse_len++] = '.';
