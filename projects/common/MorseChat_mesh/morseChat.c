@@ -16,6 +16,8 @@
 #include "idmanager.h"
 #include "openrandom.h"
 #include "packetfunctions.h"
+#include "IEEE802154E.h" 
+#include "openstack.h"
 
 // ── Time ──────────────────────────────────────────────────────────────────────
 
@@ -145,27 +147,27 @@ static int             disp_idx     = 0;
 static uint32_t        disp_until   = 0;
 
 void display_timer_init(void) {
-    NRF_TIMER0->TASKS_STOP  = 1;
-    NRF_TIMER0->TASKS_CLEAR = 1;
+    NRF_TIMER2->TASKS_STOP  = 1;
+    NRF_TIMER2->TASKS_CLEAR = 1;
 
-    NRF_TIMER0->MODE      = 0;       // Timer mode
-    NRF_TIMER0->BITMODE   = 0;       // 16-bit
-    NRF_TIMER0->PRESCALER = 4;       // 64MHz / 2^4 = 4MHz
+    NRF_TIMER2->MODE      = 0;       // Timer mode
+    NRF_TIMER2->BITMODE   = 0;       // 16-bit
+    NRF_TIMER2->PRESCALER = 4;       // 64MHz / 2^4 = 4MHz
 
-    NRF_TIMER0->CC[0]  = 2000;       // 4MHz * 0.5ms = 2000 ticks per LED
-    NRF_TIMER0->SHORTS = 1;          // CC[0] → CLEAR (auto-reset)
+    NRF_TIMER2->CC[0]  = 2000;       // 4MHz * 0.5ms = 2000 ticks per LED
+    NRF_TIMER2->SHORTS = 1;          // CC[0] → CLEAR (auto-reset)
 
-    NRF_TIMER0->INTENSET = (1 << 16);
+    NRF_TIMER2->INTENSET = (1 << 16);
 
-    NVIC_SetPriority(TIMER0_IRQn, 1);
-    NVIC_EnableIRQ(TIMER0_IRQn);
+    NVIC_SetPriority(TIMER2_IRQn, 1);
+    NVIC_EnableIRQ(TIMER2_IRQn);
 
-    NRF_TIMER0->TASKS_START = 1;
+    NRF_TIMER2->TASKS_START = 1;
 }
 
-void TIMER0_IRQHandler(void) {
-    if (NRF_TIMER0->EVENTS_COMPARE[0]) {
-        NRF_TIMER0->EVENTS_COMPARE[0] = 0;
+void TIMER2_IRQHandler(void) {
+    if (NRF_TIMER2->EVENTS_COMPARE[0]) {
+        NRF_TIMER2->EVENTS_COMPARE[0] = 0;
 
         display_clear();
 
@@ -504,23 +506,17 @@ sock_udp_ep_t local = {
 };
 
 static bool is_network_ready(void) {
-    // 1. must have IPv6 address
-    open_addr_t* addr64 = idmanager_getMyID(ADDR_64B);
-
-    bool has_addr = false;
-    for (int i = 0; i < 8; i++) {
-        if (addr64->addr_64b[i] != 0x00) {
-            has_addr = true;
-            break;
-        }
-    }
-
-    if (!has_addr) return false;
-
-    // 2. DAG root is always ready
+    // root é sempre "pronto" — ele não sincroniza com ninguém
     if (idmanager_getIsDAGroot()) return true;
-    
-    return true;
+
+    // nó: precisa estar sincronizado
+    if (!ieee154e_isSynch()) return false;
+
+    open_addr_t* addr64 = idmanager_getMyID(ADDR_64B);
+    for (int i = 0; i < 8; i++) {
+        if (addr64->addr_64b[i] != 0x00) return true;
+    }
+    return false;
 }
 
 #define MAX_NODES 16
@@ -539,7 +535,8 @@ typedef struct {
 } hello_msg_t;
 
 void send_hello_task(void) {
-    if (!is_network_ready()) {
+
+   if (!is_network_ready()) {
         scheduler_push_task(send_hello_task, TASKPRIO_COAP);
         return;
     }
@@ -619,6 +616,7 @@ void morse_send(void) {
 }
 
 void udp_receive_task(void) {
+
     static uint32_t last = 0;
 
     if (now_ms() - last < 50) {   // 50 ms interval
@@ -716,18 +714,17 @@ void display_message(const char* msg, int len) {
 // ── Task ──────────────────────────────────────────────────────────────────────
 
 static void app_task(void) {
+
     input_event_t evt = input_update();
     
     switch (evt) {
         case EVT_DOT:
             printf("[ACTION] DOT\n");
-            uint8_t buf[] = {'B', 'O', 'B', 'A', 'O'}; 
-            display_message((char*)buf, 5);
-            //display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
-            //if (morse_len < MAX_MORSE_PER_LETTER) {
-            //  morse_buf[morse_len++] = '.';
-            //  morse_buf[morse_len]   = '\0';
-            //}
+            display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
+            if (morse_len < MAX_MORSE_PER_LETTER) {
+              morse_buf[morse_len++] = '.';
+              morse_buf[morse_len]   = '\0';
+            }
             break;
         case EVT_DASH:
             printf("[ACTION] DASH\n");
@@ -773,10 +770,13 @@ static void app_task(void) {
     scheduler_push_task(app_task, TASKPRIO_COAP);
 }
 
+extern ieee154e_vars_t ieee154e_vars;
+
 static void network_debug_task(void) {
+
     static uint32_t last = 0;
 
-    if (now_ms() - last < 5000) { // every 5s
+    if (now_ms() - last < 5000) {
         scheduler_push_task(network_debug_task, TASKPRIO_COAP);
         return;
     }
@@ -787,12 +787,23 @@ static void network_debug_task(void) {
     printf("[NET DEBUG]\n");
     printf("  DAG root: %d\n", idmanager_getIsDAGroot());
     printf("  Addr64: %02x:%02x:%02x:%02x\n",
-           addr->addr_64b[4],
-           addr->addr_64b[5],
-           addr->addr_64b[6],
-           addr->addr_64b[7]);
-
+           addr->addr_64b[4], addr->addr_64b[5],
+           addr->addr_64b[6], addr->addr_64b[7]);
+    printf("  ieee154e_isSynch: %d\n", ieee154e_isSynch());      // ← sincronizado? 
     printf("  network_ready: %d\n", is_network_ready());
+    printf("  panID: %02x%02x\n",
+           idmanager_getMyID(ADDR_PANID)->panid[0],
+           idmanager_getMyID(ADDR_PANID)->panid[1]);
+    // ASN
+    uint8_t asn_bytes[5];
+    ieee154e_getAsn(asn_bytes);
+
+    printf("  ASN: %02x%02x%02x%02x%02x\n",
+           asn_bytes[4], asn_bytes[3], asn_bytes[2],
+           asn_bytes[1], asn_bytes[0]);
+    printf("  state: %d\n", ieee154e_vars.state);
+    printf("  slotOffset: %d\n", ieee154e_vars.slotOffset);
+    printf("  isSync: %d\n", ieee154e_vars.isSync);
 
     scheduler_push_task(network_debug_task, TASKPRIO_COAP);
 }
@@ -808,8 +819,9 @@ void mote_main(void) {
     display_clear();
 
     opentimers_init();
-    scheduler_init();
     idmanager_init();
+
+    openstack_init();
 
     // ---- NETWORK ROLE ----
     if (My_ID == 1) {
@@ -819,14 +831,16 @@ void mote_main(void) {
         idmanager_setIsDAGroot(FALSE);
         printf("[NET] NODE %d\n", My_ID);
     }
-    
+   
     // ---- UDP SOCKET ----
     sock_udp_create(&morse_socket, &local, NULL, 0);
 
     // ---- TASKS ----
     scheduler_push_task(app_task, TASKPRIO_COAP);
     scheduler_push_task(udp_receive_task, TASKPRIO_COAP);
+    scheduler_push_task(send_hello_task,    TASKPRIO_COAP);
     scheduler_push_task(network_debug_task, TASKPRIO_COAP);
 
     scheduler_start();
 }
+
