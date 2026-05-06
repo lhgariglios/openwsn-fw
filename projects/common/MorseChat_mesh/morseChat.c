@@ -1,0 +1,398 @@
+#include "nrf52833.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include "scheduler.h"
+#include "board.h"
+
+// ── Time ──────────────────────────────────────────────────────────────────────
+
+volatile uint32_t ms_ticks = 0;
+
+void systick_init(void) {
+    SysTick->LOAD = 64000 - 1;
+    SysTick->VAL  = 0;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk
+                  | SysTick_CTRL_TICKINT_Msk
+                  | SysTick_CTRL_ENABLE_Msk;
+}
+
+void SysTick_Handler(void) {
+    ms_ticks++;
+}
+
+static inline uint32_t now_ms(void) {
+    return ms_ticks;
+}
+
+// ── Pins ──────────────────────────────────────────────────────────────────────
+
+#define ROW1_DISCONNECT()   (NRF_P0->PIN_CNF[21] = 0x00000002)
+#define ROW2_DISCONNECT()   (NRF_P0->PIN_CNF[22] = 0x00000002)
+#define ROW3_DISCONNECT()   (NRF_P0->PIN_CNF[15] = 0x00000002)
+#define ROW4_DISCONNECT()   (NRF_P0->PIN_CNF[24] = 0x00000002)
+#define ROW5_DISCONNECT()   (NRF_P0->PIN_CNF[19] = 0x00000002)
+
+#define ROW1_OUTPUT()       (NRF_P0->PIN_CNF[21] = 0x00000003)
+#define ROW2_OUTPUT()       (NRF_P0->PIN_CNF[22] = 0x00000003)
+#define ROW3_OUTPUT()       (NRF_P0->PIN_CNF[15] = 0x00000003)
+#define ROW4_OUTPUT()       (NRF_P0->PIN_CNF[24] = 0x00000003)
+#define ROW5_OUTPUT()       (NRF_P0->PIN_CNF[19] = 0x00000003)
+
+#define ROW1_HIGH()         (NRF_P0->OUTSET = (1UL << 21))
+#define ROW2_HIGH()         (NRF_P0->OUTSET = (1UL << 22))
+#define ROW3_HIGH()         (NRF_P0->OUTSET = (1UL << 15))
+#define ROW4_HIGH()         (NRF_P0->OUTSET = (1UL << 24))
+#define ROW5_HIGH()         (NRF_P0->OUTSET = (1UL << 19))
+
+#define COL1_DISCONNECT()   (NRF_P0->PIN_CNF[28] = 0x00000002)
+#define COL2_DISCONNECT()   (NRF_P0->PIN_CNF[11] = 0x00000002)
+#define COL3_DISCONNECT()   (NRF_P0->PIN_CNF[31] = 0x00000002)
+#define COL4_DISCONNECT()   (NRF_P1->PIN_CNF[5]  = 0x00000002)
+#define COL5_DISCONNECT()   (NRF_P0->PIN_CNF[30] = 0x00000002)
+
+#define COL1_OUTPUT()       (NRF_P0->PIN_CNF[28] = 0x00000003)
+#define COL2_OUTPUT()       (NRF_P0->PIN_CNF[11] = 0x00000003)
+#define COL3_OUTPUT()       (NRF_P0->PIN_CNF[31] = 0x00000003)
+#define COL4_OUTPUT()       (NRF_P1->PIN_CNF[5]  = 0x00000003)
+#define COL5_OUTPUT()       (NRF_P0->PIN_CNF[30] = 0x00000003)
+
+#define COL1_LOW()          (NRF_P0->OUTCLR = (1UL << 28))
+#define COL2_LOW()          (NRF_P0->OUTCLR = (1UL << 11))
+#define COL3_LOW()          (NRF_P0->OUTCLR = (1UL << 31))
+#define COL4_LOW()          (NRF_P1->OUTCLR = (1UL <<  5))
+#define COL5_LOW()          (NRF_P0->OUTCLR = (1UL << 30))
+
+#define BUTTON_A_PIN 14
+#define BUTTON_B_PIN 23
+
+static void buttons_init(void) {
+    NRF_P0->PIN_CNF[BUTTON_A_PIN] = (0 << 0) | (3 << 2);
+    NRF_P0->PIN_CNF[BUTTON_B_PIN] = (0 << 0) | (3 << 2);
+}
+
+// ── LED ───────────────────────────────────────────────────────────────────────
+
+typedef enum {
+    LED11, LED12, LED13, LED14, LED15,
+    LED21, LED22, LED23, LED24, LED25,
+    LED31, LED32, LED33, LED34, LED35,
+    LED41, LED42, LED43, LED44, LED45,
+    LED51, LED52, LED53, LED54, LED55
+} led_id_t;
+
+static void display_clear(void) {
+    NRF_P0->OUTCLR = (1UL<<21)|(1UL<<22)|(1UL<<15)|(1UL<<24)|(1UL<<19);
+    NRF_P0->OUTSET = (1UL<<28)|(1UL<<11)|(1UL<<31)|(1UL<<30);
+    NRF_P1->OUTSET = (1UL<<5);
+    ROW1_DISCONNECT(); ROW2_DISCONNECT(); ROW3_DISCONNECT();
+    ROW4_DISCONNECT(); ROW5_DISCONNECT();
+    COL1_DISCONNECT(); COL2_DISCONNECT(); COL3_DISCONNECT();
+    COL4_DISCONNECT(); COL5_DISCONNECT();
+}
+
+static void display_pixel(led_id_t id) {
+    switch (id) {
+        case LED11: ROW1_OUTPUT(); ROW1_HIGH(); COL1_OUTPUT(); COL1_LOW(); break;
+        case LED12: ROW1_OUTPUT(); ROW1_HIGH(); COL2_OUTPUT(); COL2_LOW(); break;
+        case LED13: ROW1_OUTPUT(); ROW1_HIGH(); COL3_OUTPUT(); COL3_LOW(); break;
+        case LED14: ROW1_OUTPUT(); ROW1_HIGH(); COL4_OUTPUT(); COL4_LOW(); break;
+        case LED15: ROW1_OUTPUT(); ROW1_HIGH(); COL5_OUTPUT(); COL5_LOW(); break;
+
+        case LED21: ROW2_OUTPUT(); ROW2_HIGH(); COL1_OUTPUT(); COL1_LOW(); break;
+        case LED22: ROW2_OUTPUT(); ROW2_HIGH(); COL2_OUTPUT(); COL2_LOW(); break;
+        case LED23: ROW2_OUTPUT(); ROW2_HIGH(); COL3_OUTPUT(); COL3_LOW(); break;
+        case LED24: ROW2_OUTPUT(); ROW2_HIGH(); COL4_OUTPUT(); COL4_LOW(); break;
+        case LED25: ROW2_OUTPUT(); ROW2_HIGH(); COL5_OUTPUT(); COL5_LOW(); break;
+
+        case LED31: ROW3_OUTPUT(); ROW3_HIGH(); COL1_OUTPUT(); COL1_LOW(); break;
+        case LED32: ROW3_OUTPUT(); ROW3_HIGH(); COL2_OUTPUT(); COL2_LOW(); break;
+        case LED33: ROW3_OUTPUT(); ROW3_HIGH(); COL3_OUTPUT(); COL3_LOW(); break;
+        case LED34: ROW3_OUTPUT(); ROW3_HIGH(); COL4_OUTPUT(); COL4_LOW(); break;
+        case LED35: ROW3_OUTPUT(); ROW3_HIGH(); COL5_OUTPUT(); COL5_LOW(); break;
+
+        case LED41: ROW4_OUTPUT(); ROW4_HIGH(); COL1_OUTPUT(); COL1_LOW(); break;
+        case LED42: ROW4_OUTPUT(); ROW4_HIGH(); COL2_OUTPUT(); COL2_LOW(); break;
+        case LED43: ROW4_OUTPUT(); ROW4_HIGH(); COL3_OUTPUT(); COL3_LOW(); break;
+        case LED44: ROW4_OUTPUT(); ROW4_HIGH(); COL4_OUTPUT(); COL4_LOW(); break;
+        case LED45: ROW4_OUTPUT(); ROW4_HIGH(); COL5_OUTPUT(); COL5_LOW(); break;
+
+        case LED51: ROW5_OUTPUT(); ROW5_HIGH(); COL1_OUTPUT(); COL1_LOW(); break;
+        case LED52: ROW5_OUTPUT(); ROW5_HIGH(); COL2_OUTPUT(); COL2_LOW(); break;
+        case LED53: ROW5_OUTPUT(); ROW5_HIGH(); COL3_OUTPUT(); COL3_LOW(); break;
+        case LED54: ROW5_OUTPUT(); ROW5_HIGH(); COL4_OUTPUT(); COL4_LOW(); break;
+        case LED55: ROW5_OUTPUT(); ROW5_HIGH(); COL5_OUTPUT(); COL5_LOW(); break;
+    }
+}
+
+// ── Display multiplexing via TIMER0 ──────────────────────────────────────────
+
+static const led_id_t* disp_pattern = NULL;
+static int             disp_size    = 0;
+static int             disp_idx     = 0;
+static uint32_t        disp_until   = 0;
+
+void display_timer_init(void) {
+    NRF_TIMER0->TASKS_STOP  = 1;
+    NRF_TIMER0->TASKS_CLEAR = 1;
+
+    NRF_TIMER0->MODE      = 0;       // Timer mode
+    NRF_TIMER0->BITMODE   = 0;       // 16-bit
+    NRF_TIMER0->PRESCALER = 4;       // 64MHz / 2^4 = 4MHz
+
+    NRF_TIMER0->CC[0]  = 2000;       // 4MHz * 0.5ms = 2000 ticks per LED
+    NRF_TIMER0->SHORTS = 1;          // CC[0] → CLEAR (auto-reset)
+
+    NRF_TIMER0->INTENSET = (1 << 16);
+
+    NVIC_SetPriority(TIMER0_IRQn, 1);
+    NVIC_EnableIRQ(TIMER0_IRQn);
+
+    NRF_TIMER0->TASKS_START = 1;
+}
+
+void TIMER0_IRQHandler(void) {
+    if (NRF_TIMER0->EVENTS_COMPARE[0]) {
+        NRF_TIMER0->EVENTS_COMPARE[0] = 0;
+
+        display_clear();
+
+        if (disp_pattern != NULL && now_ms() < disp_until) {
+            display_pixel(disp_pattern[disp_idx]);
+            disp_idx = (disp_idx + 1) % disp_size;
+        }
+    }
+}
+
+void display_show_timed(const led_id_t* pattern, int size, uint32_t duration_ms) {
+    disp_pattern = pattern;
+    disp_size    = size;
+    disp_idx     = 0;
+    disp_until   = now_ms() + duration_ms;
+}
+
+// ── Patterns ──────────────────────────────────────────────────────────────────
+
+const led_id_t DOT[]  = { LED33 };
+const led_id_t DASH[] = { LED32, LED33, LED34 };
+const led_id_t SAVE[] = { LED22, LED32, LED42, LED23, LED43, LED24, LED34, LED44 }; 
+const led_id_t OK[]   = { LED32, LED43, LED34, LED25 };
+
+// ── Numbers  ──────────────────────────────────────────────────────────────────  
+
+const led_id_t Zero[] = {
+    LED12, LED22, LED32, LED42, LED52, LED13, LED53, LED14, LED24, LED34, LED44, LED54
+};
+const led_id_t One[] = {
+    LED22, LED13, LED23, LED33, LED43,LED52, LED53, LED54
+};
+const led_id_t Two[] = {
+    LED12, LED13, LED14,LED25,LED33, LED34,LED42,LED52, LED53, LED54, LED55
+};
+const led_id_t Three[] = {
+    LED12, LED13, LED14, LED25, LED33, LED34,
+    LED45, LED52, LED53, LED54
+};
+const led_id_t Four[] = {
+    LED14, LED23, LED24, LED32, LED33, LED34, LED35, LED44, LED54
+};
+const led_id_t Five[] = {
+    LED11, LED12, LED13, LED14, LED15, LED21, LED31, LED32, LED33, LED34, LED45, LED51, LED52, LED53, LED54
+};
+
+const led_id_t * const Digits[] = { Zero, One, Two, Three, Four, Five };
+const uint8_t Digits_size[] = {
+    sizeof(Zero)/sizeof(led_id_t),
+    sizeof(One)/sizeof(led_id_t),
+    sizeof(Two)/sizeof(led_id_t),
+    sizeof(Three)/sizeof(led_id_t),
+    sizeof(Four)/sizeof(led_id_t),
+    sizeof(Five)/sizeof(led_id_t)
+};
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+
+typedef enum {
+    EVT_NONE,
+    EVT_DOT,
+    EVT_DASH,
+    EVT_SAVE,
+    EVT_SEND,
+    EVT_BOTH
+} input_event_t;
+
+typedef struct {
+    uint32_t press_time;
+    bool     is_pressed;
+} button_t;
+
+static button_t btnA = {0};
+static button_t btnB = {0};
+
+static input_event_t input_update(void) {
+    static bool both_latched = false;
+
+    bool a = ((NRF_P0->IN & (1 << BUTTON_A_PIN)) == 0);
+    bool b = ((NRF_P0->IN & (1 << BUTTON_B_PIN)) == 0);
+
+    uint32_t now = now_ms();
+
+    // ---- press detect ----
+    if (a && !btnA.is_pressed) {
+        btnA.is_pressed = true;
+        btnA.press_time = now;
+    }
+    if (b && !btnB.is_pressed) {
+        btnB.is_pressed = true;
+        btnB.press_time = now;
+    }
+
+    // ---- latch BOTH enquanto os dois estão pressionados ----
+    if (a && b) {
+        both_latched = true;  // seta mas nunca reseta enquanto pressionado
+    }
+
+    // ---- release A ----
+    if (!a && btnA.is_pressed) {
+        btnA.is_pressed = false;
+
+        if (both_latched) {
+            if (!b) both_latched = false;
+            return b ? EVT_BOTH : EVT_NONE;  // ← só dispara se B ainda estiver pressionado
+        }
+
+        uint32_t dt = now - btnA.press_time;
+        return (dt < 200) ? EVT_DOT : EVT_DASH;
+    }
+
+    // ---- release B ----
+    if (!b && btnB.is_pressed) {
+        btnB.is_pressed = false;
+
+        if (both_latched) {
+            if (!a) both_latched = false;
+            return a ? EVT_BOTH : EVT_NONE;  // ← só dispara se A ainda estiver pressionado
+        }
+
+        uint32_t dt = now - btnB.press_time;
+        return (dt < 200) ? EVT_SAVE : EVT_SEND;
+    }
+
+    return EVT_NONE;
+
+}
+
+// ── Id configuration ──────────────────────────────────────────────────────────
+
+int Receiver_ID = 0;
+
+#define MAX_SYMBOLS    32
+#define MORSE_UDP_PORT 0xF0B0
+#define N_Ids          6
+#define My_ID          1
+
+// ── Message configuration ─────────────────────────────────────────────────────
+
+char message[MAX_SYMBOLS + 1]; // +1 para '\0'
+int  message_len = 0;
+
+#define MAX_MORSE_PER_LETTER 5
+
+char morse_buf[MAX_MORSE_PER_LETTER + 1]; // símbolos da letra atual
+int  morse_len = 0;
+
+// morse → letter
+typedef struct { const char* code; char letter; } MorseEntry;
+
+const MorseEntry morse_table[] = {
+    {".-",   'A'}, {"-...", 'B'}, {"-.-.", 'C'}, {"-..",  'D'},
+    {".",    'E'}, {"..-.", 'F'}, {"--.",  'G'}, {"....", 'H'},
+    {"..",   'I'}, {".---", 'J'}, {"-.-",  'K'}, {".-..", 'L'},
+    {"--",   'M'}, {"-.",   'N'}, {"---",  'O'}, {".--.", 'P'},
+    {"--.-", 'Q'}, {".-.",  'R'}, {"...",  'S'}, {"-",    'T'},
+    {"..-",  'U'}, {"...-", 'V'}, {".--",  'W'}, {"-..-", 'X'},
+    {"-.--", 'Y'}, {"--..", 'Z'},
+    {"-----",'0'}, {".----",'1'}, {"..---",'2'}, {"...--",'3'},
+    {"....-",'4'}, {".....", '5'},{"-....", '6'}, {"--...", '7'},
+    {"---..", '8'}, {"----.", '9'},
+    {0, 0}
+};
+
+char morse_to_char(const char* code) {
+    for (int i = 0; morse_table[i].code != 0; i++) {
+        const char* a = morse_table[i].code;
+        const char* b = code;
+        while (*a && *b && *a == *b) { a++; b++; }
+        if (*a == 0 && *b == 0) return morse_table[i].letter;
+    }
+    return '?'; 
+}
+
+// ── Task ──────────────────────────────────────────────────────────────────────
+
+static void app_task(void) {
+    input_event_t evt = input_update();
+
+    switch (evt) {
+        case EVT_DOT:
+            printf("[ACTION] DOT\n");
+            display_show_timed(DOT, sizeof(DOT)/sizeof(led_id_t), 800);
+            if (morse_len < MAX_MORSE_PER_LETTER) {
+              morse_buf[morse_len++] = '.';
+              morse_buf[morse_len]   = '\0';
+          }
+            break;
+        case EVT_DASH:
+            printf("[ACTION] DASH\n");
+            display_show_timed(DASH, sizeof(DASH)/sizeof(led_id_t), 800);
+            if (morse_len < MAX_MORSE_PER_LETTER) {
+              morse_buf[morse_len++] = '-';
+              morse_buf[morse_len]   = '\0';
+          }
+            break;
+        case EVT_SAVE:
+            printf("[ACTION] SAVE\n");
+            display_show_timed(SAVE, sizeof(SAVE)/sizeof(led_id_t), 800);
+            if (morse_len > 0 && message_len < MAX_SYMBOLS) {
+              message[message_len++] = morse_to_char(morse_buf);
+              message[message_len]   = '\0';
+              morse_len    = 0;
+              morse_buf[0] = '\0';
+          }
+            break;
+        case EVT_SEND:
+            printf("[ACTION] SEND\n");
+            display_show_timed(OK, sizeof(OK)/sizeof(led_id_t), 800);
+            //morse_send();
+            message_len  = 0;
+            message[0]   = '\0';
+            morse_len    = 0;
+            morse_buf[0] = '\0';
+            break;
+        case EVT_BOTH:
+            printf("[ACTION] BOTH\n");
+            Receiver_ID = (Receiver_ID + 1) % N_Ids;
+            display_show_timed(Digits[Receiver_ID], Digits_size[Receiver_ID], 1500);
+            break;
+        default:
+            break;
+    }
+
+    scheduler_push_task(app_task, TASKPRIO_COAP);
+}
+
+// ── Entry ─────────────────────────────────────────────────────────────────────
+
+void mote_main(void) {
+    printf("START\n");
+
+    systick_init();
+    display_timer_init();
+    buttons_init();
+
+    display_clear();
+
+    scheduler_push_task(app_task, TASKPRIO_COAP);
+    scheduler_start();
+}
