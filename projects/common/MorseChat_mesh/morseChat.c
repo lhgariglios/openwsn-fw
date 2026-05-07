@@ -458,7 +458,7 @@ int Receiver_ID = 1;
 #define MAX_SYMBOLS    32
 #define MORSE_UDP_PORT 0xF0B0
 #define N_Ids          6
-#define My_ID          1
+#define My_ID          2
 
 // ── Message configuration ─────────────────────────────────────────────────────
 
