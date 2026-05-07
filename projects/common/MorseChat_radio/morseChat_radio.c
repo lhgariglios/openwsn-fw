@@ -474,11 +474,11 @@ static int      anim_len   = 0;
 static int      anim_idx   = 0;
 static uint32_t anim_next  = 0;
 
-#define LETTER_DISPLAY_MS  800   // tempo por letra
-#define LETTER_GAP_MS      200   // pausa entre letras (display apagado)
+#define LETTER_DISPLAY_MS  800   
+#define LETTER_GAP_MS      200   
 
 static void display_message_task(void) {
-    if (anim_idx >= anim_len) return;  // animação terminou, não re-agenda
+    if (anim_idx >= anim_len) return;  
 
     uint32_t now = now_ms();
     if (now < anim_next) {
@@ -496,7 +496,7 @@ static void display_message_task(void) {
         display_clear();
         anim_next = now + LETTER_GAP_MS;
     } else {
-        anim_next = now;  // caractere desconhecido, pula
+        anim_next = now;  
     }
 
     anim_idx++;
@@ -504,7 +504,6 @@ static void display_message_task(void) {
 }
 
 void display_message(const char* msg, int len) {
-    // copia e converte para maiúsculo
     int i;
     for (i = 0; i < len && i < MAX_SYMBOLS; i++) {
         char c = msg[i];
@@ -520,8 +519,6 @@ void display_message(const char* msg, int len) {
 
 // ── Raw Radio ─────────────────────────────────────────────────────────────────
 
-// Packet layout: [to_id][from_id][text...][CRC CRC]
-// LENGTH_CRC (2) is appended automatically by the radio hardware
 #define RADIO_CHANNEL        26
 #define PKT_MAXLEN           (MAX_SYMBOLS + 2 + LENGTH_CRC)
 
@@ -530,7 +527,6 @@ static volatile bool    pkt_received = false;
 static volatile uint8_t pkt_data[MAX_SYMBOLS + 2];
 static volatile uint8_t pkt_data_len = 0;
 
-// Called by radio.c at start-of-frame — we don't need it but must provide it
 static void radio_sof_cb(PORT_TIMER_WIDTH timestamp) {
     (void)timestamp;
 }
@@ -585,11 +581,11 @@ void raw_radio_send(void) {
 
     radio_rfOff();
     radio_setFrequency(RADIO_CHANNEL, FREQ_TX);
-    radio_loadPacket(pkt, pkt_len + LENGTH_CRC);  // ← add LENGTH_CRC here
+    radio_loadPacket(pkt, pkt_len + LENGTH_CRC); 
     radio_txEnable();
     radio_txNow();
 
-    // Brief busy-wait for TX to complete (~1ms for 32 bytes at 250kbps)
+    // Complete TX 
     uint32_t t = now_ms();
     while (now_ms() - t < 5);
 
@@ -665,7 +661,7 @@ static void app_task(void) {
             morse_buf[0] = '\0';
             break;
         case EVT_BOTH:
-            printf("[ACTION] BOTH\n");
+            printf("[ACTION] BOTH\n"); // Change receiver Id
             Receiver_ID = (Receiver_ID + 1) % N_Ids;
             display_show_timed(Digits[Receiver_ID], Digits_size[Receiver_ID], 1500);
             break;
