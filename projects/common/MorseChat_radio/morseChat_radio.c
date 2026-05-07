@@ -213,6 +213,161 @@ const uint8_t          Digits_size[] = {
     sizeof(Five) /sizeof(led_id_t)
 };
 
+// ── Letters ───────────────────────────────────────────────────────────────────
+
+// Letter A
+const led_id_t Letter_A[] = {
+    LED13, LED22, LED24, LED32, LED33, LED34, LED42, LED44, LED52, LED54
+};
+
+// Letter B
+const led_id_t Letter_B[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED45, LED52, LED53, LED54
+};
+
+// Letter C
+const led_id_t Letter_C[] = {
+    LED13, LED14, LED15, LED22, LED32, LED42, LED53, LED54, LED55
+};
+
+// Letter D
+const led_id_t Letter_D[] = {
+    LED11, LED12, LED13, LED24, LED34, LED44, LED51, LED52, LED53, LED21, LED31, LED41
+};
+
+// Letter E
+const led_id_t Letter_E[] = {
+    LED12, LED13, LED14, LED15, LED22, LED32, LED33, LED34, LED42, LED52, LED53, LED54, LED55
+};
+
+// Letter F
+const led_id_t Letter_F[] = {
+    LED12, LED13, LED14, LED15, LED22, LED32, LED33, LED34, LED42, LED52
+};
+
+// Letter G
+const led_id_t Letter_G[] = {
+    LED13, LED14, LED15, LED22, LED32, LED34, LED35, LED42, LED45, LED53, LED54, LED55
+};
+
+// Letter H
+const led_id_t Letter_H[] = {
+    LED12, LED15, LED22, LED25, LED32, LED33, LED34, LED35, LED42, LED45, LED52, LED55
+};
+
+// Letter I
+const led_id_t Letter_I[] = {
+    LED12, LED13, LED14, LED23, LED33, LED43, LED52, LED53, LED54
+};
+
+// Letter J
+const led_id_t Letter_J[] = {
+    LED13, LED14, LED15, LED24, LED34, LED42, LED44, LED53
+};
+
+// Letter K
+const led_id_t Letter_K[] = {
+    LED12, LED15, LED22, LED24, LED32, LED33, LED42, LED44, LED52, LED55
+};
+
+// Letter L
+const led_id_t Letter_L[] = {
+    LED12, LED22, LED32, LED42, LED52, LED53, LED54, LED55
+};
+
+// Letter M
+const led_id_t Letter_M[] = {
+    LED11, LED21, LED31, LED41, LED51, LED22, LED33, LED24, LED15, LED25, LED35, LED45, LED55
+};
+
+// Letter N
+const led_id_t Letter_N[] = {
+    LED11, LED21, LED31, LED41, LED51, LED22, LED33, LED44, LED55, LED15, LED25, LED35, LED45
+};
+
+// Letter O
+const led_id_t Letter_O[] = {
+    LED13, LED14, LED22, LED25, LED32, LED35, LED42, LED45, LED53, LED54
+};
+
+// Letter P
+const led_id_t Letter_P[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED52
+};
+
+// Letter Q
+const led_id_t Letter_Q[] = {
+    LED13, LED14, LED22, LED25, LED32, LED35, LED42, LED44, LED53, LED54, LED55
+};
+
+// Letter R
+const led_id_t Letter_R[] = {
+    LED12, LED13, LED14, LED22, LED25, LED32, LED33, LED34, LED42, LED44, LED52, LED55
+};
+
+// Letter S
+const led_id_t Letter_S[] = {
+    LED13, LED14, LED15, LED22, LED33, LED34, LED45, LED52, LED53, LED54
+};
+
+// Letter T
+const led_id_t Letter_T[] = {
+    LED11, LED12, LED13, LED14, LED15, LED23, LED33, LED43, LED53
+};
+
+// Letter U
+const led_id_t Letter_U[] = {
+    LED11, LED21, LED31, LED41, LED52, LED53, LED54, LED15, LED25, LED35, LED45
+};
+
+// Letter V
+const led_id_t Letter_V[] = {
+    LED11, LED21, LED32, LED42, LED53, LED44, LED34, LED25, LED15
+};
+
+// Letter W
+const led_id_t Letter_W[] = {
+    LED11, LED21, LED31, LED41, LED51, LED42, LED33, LED44, LED15, LED25, LED35, LED45, LED55
+};
+
+// Letter X
+const led_id_t Letter_X[] = {
+    LED11, LED51, LED22, LED42, LED33, LED24, LED44, LED15, LED55
+};
+
+// Letter Y
+const led_id_t Letter_Y[] = {
+    LED11, LED21, LED32, LED43, LED53, LED34, LED25, LED15
+};
+
+// Letter Z
+const led_id_t Letter_Z[] = {
+    LED11, LED12, LED13, LED14, LED15, LED24, LED33, LED42, LED51, LED52, LED53, LED54, LED55
+};
+
+const led_id_t * const Letters[] = {
+    Letter_A, Letter_B, Letter_C, Letter_D, Letter_E, Letter_F, Letter_G, 
+    Letter_H, Letter_I, Letter_J, Letter_K, Letter_L, Letter_M, Letter_N, 
+    Letter_O, Letter_P, Letter_Q, Letter_R, Letter_S, Letter_T, Letter_U, 
+    Letter_V, Letter_W, Letter_X, Letter_Y, Letter_Z
+};
+
+const uint8_t Letters_size[] = {
+    sizeof(Letter_A)/sizeof(led_id_t), sizeof(Letter_B)/sizeof(led_id_t),
+    sizeof(Letter_C)/sizeof(led_id_t), sizeof(Letter_D)/sizeof(led_id_t),
+    sizeof(Letter_E)/sizeof(led_id_t), sizeof(Letter_F)/sizeof(led_id_t),
+    sizeof(Letter_G)/sizeof(led_id_t), sizeof(Letter_H)/sizeof(led_id_t),
+    sizeof(Letter_I)/sizeof(led_id_t), sizeof(Letter_J)/sizeof(led_id_t),
+    sizeof(Letter_K)/sizeof(led_id_t), sizeof(Letter_L)/sizeof(led_id_t),
+    sizeof(Letter_M)/sizeof(led_id_t), sizeof(Letter_N)/sizeof(led_id_t),
+    sizeof(Letter_O)/sizeof(led_id_t), sizeof(Letter_P)/sizeof(led_id_t),
+    sizeof(Letter_Q)/sizeof(led_id_t), sizeof(Letter_R)/sizeof(led_id_t),
+    sizeof(Letter_S)/sizeof(led_id_t), sizeof(Letter_T)/sizeof(led_id_t),
+    sizeof(Letter_U)/sizeof(led_id_t), sizeof(Letter_V)/sizeof(led_id_t),
+    sizeof(Letter_W)/sizeof(led_id_t), sizeof(Letter_X)/sizeof(led_id_t),
+    sizeof(Letter_Y)/sizeof(led_id_t), sizeof(Letter_Z)/sizeof(led_id_t)
+};
+
 // ── Input ─────────────────────────────────────────────────────────────────────
 
 typedef enum {
@@ -274,7 +429,7 @@ int Receiver_ID = 0;
 
 #define MAX_SYMBOLS          32
 #define N_Ids                6
-#define My_ID                2
+#define My_ID                1
 
 char message[MAX_SYMBOLS + 1];
 int  message_len = 0;
@@ -310,6 +465,57 @@ char morse_to_char(const char* code) {
         if (*a == 0 && *b == 0) return morse_table[i].letter;
     }
     return '?';
+}
+
+// ── Letter display animation ──────────────────────────────────────────────────
+
+static char     anim_msg[MAX_SYMBOLS + 1] = {0};
+static int      anim_len   = 0;
+static int      anim_idx   = 0;
+static uint32_t anim_next  = 0;
+
+#define LETTER_DISPLAY_MS  800   // tempo por letra
+#define LETTER_GAP_MS      200   // pausa entre letras (display apagado)
+
+static void display_message_task(void) {
+    if (anim_idx >= anim_len) return;  // animação terminou, não re-agenda
+
+    uint32_t now = now_ms();
+    if (now < anim_next) {
+        scheduler_push_task(display_message_task, TASKPRIO_COAP);
+        return;
+    }
+
+    char c = anim_msg[anim_idx];
+
+    if (c >= 'A' && c <= 'Z') {
+        int i = c - 'A';
+        display_show_timed(Letters[i], Letters_size[i], LETTER_DISPLAY_MS);
+        anim_next = now + LETTER_DISPLAY_MS + LETTER_GAP_MS;
+    } else if (c == ' ') {
+        display_clear();
+        anim_next = now + LETTER_GAP_MS;
+    } else {
+        anim_next = now;  // caractere desconhecido, pula
+    }
+
+    anim_idx++;
+    scheduler_push_task(display_message_task, TASKPRIO_COAP);
+}
+
+void display_message(const char* msg, int len) {
+    // copia e converte para maiúsculo
+    int i;
+    for (i = 0; i < len && i < MAX_SYMBOLS; i++) {
+        char c = msg[i];
+        anim_msg[i] = (c >= 'a' && c <= 'z') ? c - 32 : c;
+    }
+    anim_msg[i] = '\0';
+    anim_len  = i;
+    anim_idx  = 0;
+    anim_next = now_ms();
+
+    scheduler_push_task(display_message_task, TASKPRIO_COAP);
 }
 
 // ── Raw Radio ─────────────────────────────────────────────────────────────────
@@ -410,8 +616,10 @@ static void check_incoming(void) {
     pkt_data[pkt_data_len] = '\0';
 
     printf("[RAW] MSG from=%d: %s\n", from_id, (char*)&pkt_data[2]);
-    display_show_timed(OK, sizeof(OK)/sizeof(led_id_t), 1500);
+
+    display_message((const char*)&pkt_data[2], text_len);
 }
+
 
 // ── Task ──────────────────────────────────────────────────────────────────────
 
